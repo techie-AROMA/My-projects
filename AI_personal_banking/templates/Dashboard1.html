@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr));">
+<h1>📊 AI Financial Dashboard</h1>
+
+<!-- 🎚️ Balance Slider -->
+<div class="card">
+    <h2>Adjust Balance</h2>
+    <input type="range" min="1000" max="20000" value="{{ balance }}" id="balanceSlider">
+    <h3>₹<span id="balanceValue">{{ balance }}</span></h3>
+</div>
+
+<!-- 💰 Current Balance -->
+<div class="card">
+    <h2>Current Balance: ₹<span id="currentBalance">{{ balance }}</span></h2>
+</div>
+
+<!-- ➕ Add Transactions -->
+<div class="card">
+    <h2>Add Transactions</h2>
+
+    <form method="POST">
+        <input type="number" name="Food" placeholder="Food 🍔"><br>
+        <input type="number" name="Shopping" placeholder="Shopping 🛍️"><br>
+        <input type="number" name="Bills" placeholder="Bills 💡"><br>
+        <input type="number" name="Transport" placeholder="Transport 🚗"><br>
+
+        <button type="submit">Add All</button>
+    </form>
+</div>
+
+<!-- 📊 Pie Chart -->
+<div class="card">
+    <h2>Expense Distribution</h2>
+    <canvas id="chart"></canvas>
+</div>
+
+<!-- 📊 Category Bars -->
+<div class="card">
+    <h2>Expense Breakdown</h2>
+
+    {% for cat, val in data.items() %}
+    <div style="margin-bottom:15px; text-align:left;">
+
+        <div style="display:flex; justify-content:space-between;">
+            <b>{{ cat }}</b>
+            <span>₹{{ val }}</span>
+        </div>
+
+        <div style="background:#333; height:8px; border-radius:10px;">
+            <div style="
+                width: {{ (val / (data.values()|sum)) * 100 if data.values()|sum > 0 else 0 }}%;
+                height:8px;
+                border-radius:10px;
+
+                {% if cat == 'Food' %}
+                    background: orange;
+                {% elif cat == 'Shopping' %}
+                    background: red;
+                {% elif cat == 'Bills' %}
+                    background: purple;
+                {% else %}
+                    background: green;
+                {% endif %}
+            ">
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 🧠 Behavior -->
+<div class="card">
+    <h2>Spending Behavior</h2>
+    <p class="success">{{ behavior_msg }}</p>
+</div>
+
+<!-- 📉 Prediction -->
+<div class="card">
+    <h2>Balance Prediction</h2>
+    <p class="warning">{{ prediction_msg }}</p>
+</div>
+
+<!-- 💡 Savings -->
+<div class="card">
+    <h2>Smart Savings</h2>
+    <p class="success">{{ savings_msg }}</p>
+</div>
+
+<!-- 🏦 FD Advisor -->
+<div class="card">
+    <h2>FD Advisor</h2>
+    <p class="success">{{ fd_msg }}</p>
+</div>
+
+<!-- 🤖 Decision Engine -->
+<div class="card">
+    <h2>Can I Afford This?</h2>
+
+    <form method="POST">
+        <input type="hidden" name="balance" id="hiddenBalance">
+        <input type="number" name="price" placeholder="Enter amount" required>
+        <button type="submit">Check</button>
+    </form>
+
+    <h3>{{ result }}</h3>
+</div>
+</div>
+<!-- 📊 Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const data = {{ data | tojson }};
+const labels = Object.keys(data || {});
+const values = Object.values(data || {});
+
+const ctx = document.getElementById('chart');
+
+if (labels.length > 0) {
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values
+            }]
+        }
+    });
+} else {
+    ctx.outerHTML = "<p>No transactions yet. Add some data 👆</p>";
+}
+
+// Slider logic
+const slider = document.getElementById("balanceSlider");
+const value = document.getElementById("balanceValue");
+const current = document.getElementById("currentBalance");
+const hidden = document.getElementById("hiddenBalance");
+
+slider.oninput = function() {
+    value.innerHTML = this.value;
+    current.innerHTML = this.value;
+    hidden.value = this.value;
+}
+</script>
+
+{% endblock %}

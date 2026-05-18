@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>💳 AI Bank</h2>
+        <a href="#">🏠 Dashboard</a>
+        <a href="#">📊 Analytics</a>
+        <a href="#">💸 Expenses</a>
+        <a href="#">⚙️ Settings</a>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <h2>Dashboard</h2>
+            <input type="text" placeholder="Search...">
+        </div>
+
+        <!-- BALANCE + SLIDER -->
+        <div class="cards">
+
+            <div class="card">
+                <h3>💰 Current Balance</h3>
+                <h2>₹<span id="currentBalance">{{ balance }}</span></h2>
+
+                <input type="range" min="1000" max="20000"
+                       value="{{ balance }}" id="balanceSlider">
+
+                <p>Selected: ₹<span id="balanceValue">{{ balance }}</span></p>
+            </div>
+
+            <div class="card">
+                <h3>📉 Prediction</h3>
+                <p class="warning">{{ prediction_msg }}</p>
+            </div>
+
+            <div class="card">
+                <h3>🏦 FD Advice</h3>
+                <p class="success">{{ fd_msg }}</p>
+            </div>
+
+        </div>
+
+        <!-- ADD TRANSACTION -->
+        <div class="card">
+            <h3>➕ Add Transactions</h3>
+
+            <form method="POST">
+                <input type="number" name="Food" placeholder="Food 🍔">
+                <input type="number" name="Shopping" placeholder="Shopping 🛍️">
+                <input type="number" name="Bills" placeholder="Bills 💡">
+                <input type="number" name="Transport" placeholder="Transport 🚗">
+
+                <button type="submit">Add All</button>
+            </form>
+        </div>
+
+        <!-- CHART -->
+        <div class="chart-card">
+            <h3>📊 Expense Chart</h3>
+            <canvas id="chart"></canvas>
+        </div>
+
+        <!-- CATEGORY BARS -->
+        <div class="card">
+            <h3>📊 Expense Breakdown</h3>
+
+            {% for cat, val in data.items() %}
+            <div style="margin-bottom:15px;">
+
+                <div style="display:flex; justify-content:space-between;">
+                    <b>{{ cat }}</b>
+                    <span>₹{{ val }}</span>
+                </div>
+
+                <div style="background:#333; height:8px; border-radius:10px;">
+                    <div style="
+                        width: {{ (val / (data.values()|sum)) * 100 if data.values()|sum > 0 else 0 }}%;
+                        height:8px;
+                        border-radius:10px;
+                        background: #22c55e;
+                    ">
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- AI INSIGHTS -->
+        <div class="cards">
+
+            <div class="card">
+                <h3>🧠 Behavior</h3>
+                <p>{{ behavior_msg }}</p>
+            </div>
+
+            <div class="card">
+                <h3>💡 Savings</h3>
+                <p>{{ savings_msg }}</p>
+            </div>
+
+        </div>
+
+        <!-- DECISION ENGINE -->
+        <div class="card">
+            <h3>🤖 Can I Afford This?</h3>
+
+            <form method="POST">
+                <input type="hidden" name="balance" id="hiddenBalance">
+                <input type="number" name="price" placeholder="Enter amount" required>
+                <button type="submit">Check</button>
+            </form>
+
+            <h3>{{ result }}</h3>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Chart JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const data = {{ data | tojson }};
+const labels = Object.keys(data || {});
+const values = Object.values(data || {});
+
+const ctx = document.getElementById('chart');
+
+if (labels.length > 0) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values
+            }]
+        }
+    });
+}
+
+// Slider logic
+const slider = document.getElementById("balanceSlider");
+const value = document.getElementById("balanceValue");
+const current = document.getElementById("currentBalance");
+const hidden = document.getElementById("hiddenBalance");
+
+slider.oninput = function() {
+    value.innerHTML = this.value;
+    current.innerHTML = this.value;
+    hidden.value = this.value;
+}
+</script>
+
+{% endblock %}
